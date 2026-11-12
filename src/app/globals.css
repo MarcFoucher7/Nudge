@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* Nudge — light theme uniquement. Référence : Linear / Vercel. */
+@theme inline {
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  --color-paper: #ffffff;
+  --color-canvas: #fafafa;
+  --color-line: #e5e7eb;       /* gray-200 */
+  --color-ink: #1f2937;        /* gray-800 */
+  --color-ink-soft: #6b7280;   /* gray-500 */
+  --color-ink-mute: #9ca3af;   /* gray-400 */
+
+  /* Charge mentale : pastels désaturés */
+  --color-mint: #ecfdf5;
+  --color-mint-ink: #047857;
+  --color-butter: #fefce8;
+  --color-butter-ink: #a16207;
+  --color-salmon: #fff1f2;
+  --color-salmon-ink: #be123c;
+  --color-sky: #eff6ff;
+  --color-sky-ink: #1d4ed8;
+}
+
+html { color-scheme: light only; }
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes nudge-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.animate-pop { animation: nudge-pop 280ms cubic-bezier(.2,.8,.2,1); }
