@@ -49,6 +49,14 @@ export async function importPlan(_prev: ImportState, formData: FormData): Promis
     return { error: e instanceof Error ? e.message : "JSON invalide" };
   }
 
+  try {
+    return await schedulePlan(userId, plan);
+  } catch (e) {
+    return { error: e instanceof Error ? `Planification impossible : ${e.message}` : "Planification impossible" };
+  }
+}
+
+async function schedulePlan(userId: string, plan: ReturnType<typeof parsePlan>): Promise<ImportState> {
   const project =
     (await prisma.project.findFirst({ where: { userId, name: plan.project } })) ??
     (await prisma.project.create({ data: { userId, name: plan.project } }));

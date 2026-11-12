@@ -13,14 +13,12 @@ export async function calendarFor(userId: string): Promise<Calendar | null> {
   return google.calendar({ version: "v3", auth: oauth });
 }
 
+/** Créneaux occupés. freeBusy exigerait calendar.readonly : on dérive des événements (scope calendar.events). */
 export async function busyBetween(cal: Calendar, from: Date, to: Date): Promise<Busy[]> {
-  const res = await cal.freebusy.query({
-    requestBody: { timeMin: from.toISOString(), timeMax: to.toISOString(), items: [{ id: "primary" }] },
-  });
-  return (res.data.calendars?.primary?.busy ?? []).map((b) => ({ start: new Date(b.start!), end: new Date(b.end!) }));
+  return (await eventsBetween(cal, from, to)).filter((e) => e.busy);
 }
 
-export type AgendaEvent = { id: string; title: string; start: Date; end: Date };
+export type AgendaEvent = { id: string; title: string; start: Date; end: Date; busy: boolean };
 
 export async function eventsBetween(cal: Calendar, from: Date, to: Date): Promise<AgendaEvent[]> {
   const res = await cal.events.list({
@@ -32,7 +30,13 @@ export async function eventsBetween(cal: Calendar, from: Date, to: Date): Promis
   });
   return (res.data.items ?? [])
     .filter((e) => e.start?.dateTime && e.end?.dateTime)
-    .map((e) => ({ id: e.id!, title: e.summary ?? "(sans titre)", start: new Date(e.start!.dateTime!), end: new Date(e.end!.dateTime!) }));
+    .map((e) => ({
+      id: e.id!,
+      title: e.summary ?? "(sans titre)",
+      start: new Date(e.start!.dateTime!),
+      end: new Date(e.end!.dateTime!),
+      busy: e.transparency !== "transparent",
+    }));
 }
 
 type EventInput = { googleEventId?: string | null; title: string; description?: string | null; start: Date; durationMinutes: number };

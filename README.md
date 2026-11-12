@@ -10,7 +10,7 @@ Planification de révisions et de projets (TOEIC, concours, partiels) avec synch
 | UI | Tailwind CSS v4, Inter, lucide-react, light theme uniquement |
 | Auth Google + scope Calendar | Auth.js v5 (`next-auth@beta`) + `@auth/prisma-adapter` |
 | Base de données | PostgreSQL via Prisma 6 |
-| Google Calendar | `googleapis` : freebusy, lecture de l'agenda, création et déplacement d'événements |
+| Google Calendar | `googleapis` : lecture des événements (créneaux occupés et agenda), création et déplacement d'événements |
 | Validation JSON importé | `zod` |
 | Tests | `node --test` (fonctions pures : planification, parseur) |
 | Hébergement | Vercel + Supabase ou Neon |
@@ -69,7 +69,7 @@ src/
   lib/
     auth.ts                   # NextAuth + requireUserId()
     prisma.ts                 # client singleton
-    google-calendar.ts        # calendarFor, busyBetween, eventsBetween, upsertEvent
+    google-calendar.ts        # calendarFor, busyBetween (dérivé des événements, freeBusy exigerait calendar.readonly), eventsBetween, upsertEvent
     scheduling.ts             # findSlot, placeAll (pur, testé)
     import.ts                 # schéma zod, parsePlan (tolère ``` et // commentaires)
     actions.ts                # server actions : setTaskDone, snoozeTask, createProject, importPlan
