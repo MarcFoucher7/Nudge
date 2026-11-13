@@ -1,12 +1,12 @@
 import { Planner } from "@/components/planner";
 import { requireUserId } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export default async function PlannerPage() {
-  await requireUserId();
-  return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold tracking-tight">Planning</h1>
-      <Planner />
-    </div>
-  );
+  const userId = await requireUserId();
+  const [user, projects] = await Promise.all([
+    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { icsToken: true } }),
+    prisma.project.findMany({ where: { userId }, select: { id: true, name: true }, orderBy: { createdAt: "asc" } }),
+  ]);
+  return <Planner projects={projects} icsToken={user.icsToken} />;
 }

@@ -1,21 +1,14 @@
 "use client";
 
 import { useOptimistic, useState, useTransition } from "react";
-import { BatteryLow, Check, Clock, Play } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BatteryLow, Check, Clock, Pencil, Play, Plus } from "lucide-react";
 import type { MentalLoad } from "@prisma/client";
 import { setTaskDone, snoozeTask } from "@/lib/actions";
 import { Pomodoro } from "./pomodoro";
+import { TaskDialog, type EditableTask, type ProjectOption } from "./task-dialog";
 
-export type TaskView = {
-  id: string;
-  title: string;
-  description: string | null;
-  durationMinutes: number;
-  mentalLoad: MentalLoad;
-  time: string | null;
-  done: boolean;
-  project: string | null;
-};
+export type TaskView = EditableTask & { time: string | null; done: boolean; project: string | null };
 
 const LOAD: Record<MentalLoad, { label: string; cls: string }> = {
   HIGH: { label: "Haute", cls: "bg-salmon text-salmon-ink" },
@@ -23,14 +16,14 @@ const LOAD: Record<MentalLoad, { label: string; cls: string }> = {
   LOW: { label: "Basse", cls: "bg-mint text-mint-ink" },
 };
 
-export function TodayTasks({ initialTasks }: { initialTasks: TaskView[] }) {
-  const [tasks, setDone] = useOptimistic(initialTasks, (ts, u: { id: string; done: boolean }) =>
-    ts.map((t) => (t.id === u.id ? { ...t, done: u.done } : t)),
-  );
+export function TodayTasks({ initialTasks, projects }: { initialTasks: TaskView[]; projects: ProjectOption[] }) {
+  const [tasks, setDone] = useOptimistic(initialTasks, (ts, u: { id: string; done: boolean }) => ts.map((t) => (t.id === u.id ? { ...t, done: u.done } : t)));
   const [, startTransition] = useTransition();
   const [tired, setTired] = useState(false);
   const [justChecked, setJustChecked] = useState<string | null>(null);
   const [active, setActive] = useState<TaskView | null>(null);
+  const [editing, setEditing] = useState<TaskView | null | "new">(null);
+  const router = useRouter();
 
   const visible = tired ? tasks.filter((t) => t.mentalLoad === "LOW") : tasks;
 
@@ -41,21 +34,28 @@ export function TodayTasks({ initialTasks }: { initialTasks: TaskView[] }) {
       await setTaskDone(t.id, !t.done);
     });
   };
+  const btn = "inline-flex items-center gap-1 rounded-md border border-line px-2 py-1 text-xs text-ink-soft hover:bg-canvas hover:text-ink";
 
   return (
     <section>
       <div className="mb-3 flex items-center justify-between gap-4">
-        <h2 className="text-xs font-medium uppercase tracking-wider text-ink-mute">Tâches</h2>
-        <button
-          onClick={() => setTired((v) => !v)}
-          aria-pressed={tired}
-          className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition ${
-            tired ? "border-mint-ink/30 bg-mint text-mint-ink" : "border-line bg-paper text-ink-soft hover:text-ink"
-          }`}
-        >
-          <BatteryLow className="size-3.5" strokeWidth={1.5} aria-hidden />
-          Énergie basse
-        </button>
+        <h2 className="text-xs font-medium uppercase tracking-wider text-ink-mute">Tâches du jour</h2>
+        <div className="flex gap-2">
+          <button onClick={() => setEditing("new")} className={btn}>
+            <Plus className="size-3.5" strokeWidth={1.5} aria-hidden />
+            Tâche
+          </button>
+          <button
+            onClick={() => setTired((v) => !v)}
+            aria-pressed={tired}
+            className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition ${
+              tired ? "border-mint-ink/30 bg-mint text-mint-ink" : "border-line bg-paper text-ink-soft hover:text-ink"
+            }`}
+          >
+            <BatteryLow className="size-3.5" strokeWidth={1.5} aria-hidden />
+            Énergie basse
+          </button>
+        </div>
       </div>
 
       <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-paper shadow-sm">
@@ -87,31 +87,28 @@ export function TodayTasks({ initialTasks }: { initialTasks: TaskView[] }) {
                 </p>
               </div>
 
-              {!t.done && (
-                <div className="flex shrink-0 gap-1 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
-                  <button
-                    onClick={() => setActive(t)}
-                    className="inline-flex items-center gap-1 rounded-md border border-line px-2 py-1 text-xs text-ink-soft hover:bg-canvas hover:text-ink"
-                    title="Lancer un Pomodoro de 25 min"
-                  >
-                    <Play className="size-3" strokeWidth={1.5} aria-hidden />
-                    Pomodoro
-                  </button>
-                  <button
-                    onClick={() => startTransition(() => snoozeTask(t.id))}
-                    className="rounded-md border border-line px-2 py-1 text-xs text-ink-soft hover:bg-canvas hover:text-ink"
-                    title="Reporter au prochain créneau libre"
-                  >
-                    Reporter
-                  </button>
-                </div>
-              )}
+              <div className="flex shrink-0 gap-1 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+                <button onClick={() => setEditing(t)} className={btn} title="Modifier">
+                  <Pencil className="size-3" strokeWidth={1.5} aria-hidden />
+                </button>
+                {!t.done && (
+                  <>
+                    <button onClick={() => setActive(t)} className={btn} title="Lancer un Pomodoro de 25 min">
+                      <Play className="size-3" strokeWidth={1.5} aria-hidden />
+                      Pomodoro
+                    </button>
+                    <button onClick={() => startTransition(() => snoozeTask(t.id))} className={btn} title="Reporter au prochain créneau libre">
+                      Reporter
+                    </button>
+                  </>
+                )}
+              </div>
             </li>
           );
         })}
         {visible.length === 0 && (
           <li className="px-4 py-8 text-center text-sm text-ink-soft">
-            {tired ? "Aucune tâche à énergie basse aujourd'hui." : "Rien de prévu. Importe un plan pour commencer."}
+            {tired ? "Aucune tâche à énergie basse aujourd'hui." : "Rien de prévu. Ajoute une tâche ou demande un plan à l'assistant."}
           </li>
         )}
       </ul>
@@ -119,6 +116,7 @@ export function TodayTasks({ initialTasks }: { initialTasks: TaskView[] }) {
       {active && (
         <Pomodoro
           title={active.title}
+          taskId={active.id}
           onClose={() => setActive(null)}
           onDone={() => {
             toggle(active);
@@ -126,6 +124,17 @@ export function TodayTasks({ initialTasks }: { initialTasks: TaskView[] }) {
           }}
         />
       )}
+
+      <TaskDialog
+        open={editing !== null}
+        task={editing === "new" ? null : editing}
+        projects={projects}
+        onClose={() => setEditing(null)}
+        onSaved={() => {
+          setEditing(null);
+          router.refresh();
+        }}
+      />
     </section>
   );
 }

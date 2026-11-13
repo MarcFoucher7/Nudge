@@ -66,3 +66,10 @@ export async function allBusy(userId: string, cal: Calendar | null, from: Date, 
   const google = cal ? await busyBetween(cal, from, to) : [];
   return [...google, ...own.map((t) => ({ start: t.scheduledAt!, end: new Date(t.scheduledAt!.getTime() + t.durationMinutes * 60_000) }))];
 }
+
+/** Supprime l'événement ; ignore s'il n'existe plus. */
+export async function deleteEvent(cal: Calendar, eventId: string) {
+  await cal.events.delete({ calendarId: "primary", eventId }).catch((e: { code?: number }) => {
+    if (e.code !== 404 && e.code !== 410) throw e;
+  });
+}

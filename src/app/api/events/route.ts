@@ -35,7 +35,17 @@ export async function GET(req: Request) {
       color: LOAD_COLORS[t.mentalLoad].bg,
       contrastColor: LOAD_COLORS[t.mentalLoad].fg,
       classNames: t.completedAt ? ["nudge-done"] : [],
-      extendedProps: { kind: "task", taskId: t.id, description: t.description, mentalLoad: t.mentalLoad, done: !!t.completedAt, project: t.project?.name ?? null },
+      extendedProps: {
+        kind: "task",
+        taskId: t.id,
+        description: t.description,
+        durationMinutes: t.durationMinutes,
+        mentalLoad: t.mentalLoad,
+        done: !!t.completedAt,
+        project: t.project?.name ?? null,
+        projectId: t.projectId,
+        scheduledAt: t.scheduledAt,
+      },
     })),
     ...google
       .filter((e) => !own.has(e.id))

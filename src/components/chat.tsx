@@ -65,7 +65,7 @@ export function Chat({ onPreview, onCommitted }: { onPreview: (t: PreviewTask[])
   };
 
   return (
-    <section className="flex h-[32rem] flex-col rounded-lg border border-line bg-paper shadow-sm lg:h-[calc(100vh-11rem)]">
+    <section className="flex h-[28rem] min-h-0 flex-col rounded-lg border border-line bg-paper shadow-sm lg:h-auto lg:flex-1">
       <h2 className="border-b border-line px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-ink-mute">Assistant</h2>
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3 text-sm">
         {messages.length === 0 && (

@@ -59,15 +59,22 @@ src/
     api/auth/[...nextauth]/   # Auth.js
     api/events/route.ts       # événements (tâches Nudge + Google) pour FullCalendar
     api/chat/route.ts         # chat IA : créneaux libres en contexte, réponse en streaming
+    api/ics/[token]/route.ts  # flux iCalendar privé (Apple Calendar, Outlook)
+    icon.svg                  # favicon (logo)
     (app)/
       layout.tsx              # sidebar, série, déconnexion ; redirige vers /login
-      dashboard/page.tsx      # progression, agenda Google du jour, tâches du jour
-      planner/page.tsx        # calendrier FullCalendar + chat IA
+      dashboard/page.tsx      # statistiques, graphique hebdo, suggestions, agenda et tâches du jour
+      planner/page.tsx        # calendrier FullCalendar + chat IA, création/édition de tâches, export ICS
+      timer/page.tsx          # Pomodoro autonome (25/5, 50/10, 90/15) et historique des sessions de focus
       projects/page.tsx       # jauges + tâches par projet, création
       import/page.tsx         # import JSON + prompt à donner à l'IA
       academy/page.tsx        # Méthode des J, Active Recall, Pomodoro
   components/
-    planner.tsx               # calendrier, drag & drop, panneau de détail, Pomodoro
+    logo.tsx                  # marque et wordmark
+    task-dialog.tsx           # création / modification / suppression d'une tâche (<dialog> natif)
+    focus-timer.tsx           # timer de la page Timer
+    week-bars.tsx             # graphique minutes planifiées / terminées (CSS pur)
+    planner.tsx               # calendrier, drag & drop, clic sur un créneau, panneau de détail, export
     chat.tsx                  # chat IA, interception du JSON, aperçu puis ajout
     today-tasks.tsx           # liste, filtre énergie basse, cochage optimiste, report, Pomodoro
     pomodoro.tsx              # 25/5, barre fixe en bas, titre d'onglet
@@ -78,10 +85,16 @@ src/
     prisma.ts                 # client singleton
     google-calendar.ts        # calendarFor, busyBetween (dérivé des événements, freeBusy exigerait calendar.readonly), eventsBetween, upsertEvent
     scheduling.ts             # findSlot, placeAll, freeSlots (pur, testé)
+    stats.ts                  # weekStats, suggestions (pur, testé)
+    ics.ts                    # buildIcs (pur, testé)
     llm.ts                    # client chat/completions en streaming (ou stub)
     import.ts                 # schéma zod, parsePlan (tolère ``` et // commentaires)
-    actions.ts                # server actions : setTaskDone, snoozeTask, moveTask, moveGoogleEvent, importPlan, previewPlan
+    actions.ts                # server actions : tâches (create/update/delete/move/done/snooze), import, preview, logFocusSession
 ```
+
+## Export vers Apple Calendar
+
+Planning → Exporter → « Ouvrir dans Calendrier » : lien `webcal://<hôte>/api/ics/<jeton>` abonné dans Calendrier (mise à jour automatique). Le jeton est propre à chaque utilisateur (`User.icsToken`). Un fichier `.ics` statique est aussi téléchargeable.
 
 ## Règles métier
 
@@ -91,6 +104,8 @@ src/
 - **Import JSON** : `schedule_offset_days` est ajouté à la date d'import (J+0 démarre à l'heure courante). Chaque tâche devient un événement Google si le calendrier est connecté.
 - **Report** : prochain créneau libre à partir de maintenant, événement Google déplacé, `snoozeCount` incrémenté.
 - **Série** : incrémentée au premier cochage de la journée si la veille était active, sinon remise à 1.
+- **Focus** : chaque phase de travail terminée (Timer ou Pomodoro d'une tâche) crée une `FocusSession` ; le Dashboard cumule les minutes de la semaine.
+- **Suggestions** : règles simples dans `src/lib/stats.ts` (retard, sans créneau, charge selon l'heure, série en danger).
 - **Fuseau** : le serveur tourne avec `TZ=Europe/Paris` (variable d'environnement, à définir aussi sur Vercel).
 
 ## Chat IA et planning

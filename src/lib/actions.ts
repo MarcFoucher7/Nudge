@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "./prisma";
 import { requireUserId } from "./auth";
-import { allBusy, calendarFor, upsertEvent } from "./google-calendar";
+import { allBusy, calendarFor, deleteEvent, upsertEvent } from "./google-calendar";
+import { z } from "zod";
 import { addDays, findSlot, placeAll, SEARCH_DAYS, startOfDay } from "./scheduling";
 import { methodOf, parsePlan, type Plan } from "./import";
 
@@ -48,6 +49,66 @@ export async function moveGoogleEvent(googleEventId: string, title: string, star
   const start = new Date(startIso);
   const durationMinutes = Math.round((new Date(endIso).getTime() - start.getTime()) / 60_000);
   await upsertEvent(cal, { googleEventId, title, start, durationMinutes });
+}
+
+const taskInput = z.object({
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(5000).optional(),
+  durationMinutes: z.coerce.number().int().min(5).max(480),
+  mentalLoad: z.enum(["HIGH", "MEDIUM", "LOW"]),
+  scheduledAt: z.string().optional(), // datetime-local ("" = sans créneau)
+  projectId: z.string().optional(),
+});
+export type TaskInput = z.input<typeof taskInput>;
+
+const parseTask = (input: TaskInput) => {
+  const d = taskInput.parse(input);
+  return { ...d, description: d.description || null, scheduledAt: d.scheduledAt ? new Date(d.scheduledAt) : null, projectId: d.projectId || null };
+};
+
+/** Création manuelle d'une tâche (formulaire ou clic sur un créneau du calendrier). */
+export async function createTask(input: TaskInput) {
+  const userId = await requireUserId();
+  const data = parseTask(input);
+  const cal = data.scheduledAt ? await calendarFor(userId) : null;
+  const googleEventId = cal && data.scheduledAt ? await upsertEvent(cal, { title: data.title, description: data.description, start: data.scheduledAt, durationMinutes: data.durationMinutes }) : null;
+  await prisma.task.create({ data: { userId, ...data, googleEventId } });
+  revalidatePath("/", "layout");
+}
+
+/** Modification manuelle : l'événement Google suit (créé, déplacé ou supprimé si plus de créneau). */
+export async function updateTask(id: string, input: TaskInput) {
+  const userId = await requireUserId();
+  const task = await prisma.task.findUniqueOrThrow({ where: { id, userId } });
+  const data = parseTask(input);
+  const cal = await calendarFor(userId);
+  let googleEventId = task.googleEventId;
+  if (cal && data.scheduledAt) {
+    googleEventId = await upsertEvent(cal, { googleEventId, title: data.title, description: data.description, start: data.scheduledAt, durationMinutes: data.durationMinutes });
+  } else if (cal && !data.scheduledAt && googleEventId) {
+    await deleteEvent(cal, googleEventId);
+    googleEventId = null;
+  }
+  await prisma.task.update({ where: { id }, data: { ...data, googleEventId } });
+  revalidatePath("/", "layout");
+}
+
+export async function deleteTask(id: string) {
+  const userId = await requireUserId();
+  const task = await prisma.task.findUniqueOrThrow({ where: { id, userId } });
+  if (task.googleEventId) {
+    const cal = await calendarFor(userId);
+    if (cal) await deleteEvent(cal, task.googleEventId);
+  }
+  await prisma.task.delete({ where: { id } });
+  revalidatePath("/", "layout");
+}
+
+/** Phase de travail Pomodoro terminée. */
+export async function logFocusSession(minutes: number, taskId?: string | null) {
+  const userId = await requireUserId();
+  await prisma.focusSession.create({ data: { userId, taskId: taskId ?? null, minutes: Math.max(1, Math.round(minutes)) } });
+  revalidatePath("/", "layout");
 }
 
 export async function createProject(formData: FormData) {

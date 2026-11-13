@@ -19,12 +19,14 @@ model User {
   currentStreak Int       @default(0)
   longestStreak Int       @default(0)
   lastActiveOn  DateTime? // minuit local du dernier jour actif
+  icsToken      String    @unique @default(cuid()) // flux iCalendar privé (Apple Calendar, Outlook)
   createdAt     DateTime  @default(now())
 
   accounts Account[]
   sessions Session[]
   projects Project[]
   tasks    Task[]
+  focus    FocusSession[]
 }
 
 // Stocke access_token + refresh_token Google (scope calendar)
@@ -113,4 +115,16 @@ model Task {
 
   @@index([userId, scheduledAt])
   @@index([projectId])
+}
+
+// Une phase de travail Pomodoro terminée (statistiques de focus)
+model FocusSession {
+  id        String   @id @default(cuid())
+  userId    String
+  taskId    String?
+  minutes   Int
+  startedAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startedAt])
 }

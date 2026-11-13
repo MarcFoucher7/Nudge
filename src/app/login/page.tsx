@@ -1,12 +1,16 @@
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/lib/auth";
+import { Logo } from "@/components/logo";
 
 export default async function LoginPage() {
   if ((await auth())?.user) redirect("/dashboard");
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm rounded-lg border border-line bg-paper p-8 shadow-sm">
-        <h1 className="text-lg font-semibold tracking-tight">Nudge</h1>
+        <div className="flex items-center gap-2">
+          <Logo className="size-7" />
+          <h1 className="text-lg font-semibold tracking-tight">Nudge</h1>
+        </div>
         <p className="mt-2 text-sm text-ink-soft">
           Connexion avec Google. L&apos;accès au calendrier sert à lire ton emploi du temps et à y placer tes tâches.
         </p>
