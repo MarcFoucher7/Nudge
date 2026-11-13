@@ -31,7 +31,7 @@ Renvoie UNIQUEMENT le bloc JSON valide.`;
 
 export default function ImportPage() {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="mx-auto flex max-w-3xl flex-col gap-8">
       <header>
         <h1 className="text-xl font-semibold tracking-tight">Importer un plan</h1>
         <p className="mt-1 text-sm text-ink-soft">

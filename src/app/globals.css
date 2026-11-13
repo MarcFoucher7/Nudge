@@ -36,3 +36,23 @@ body {
   100% { transform: scale(1); }
 }
 .animate-pop { animation: nudge-pop 280ms cubic-bezier(.2,.8,.2,1); }
+
+/* FullCalendar : aligné sur le thème */
+.nudge-cal {
+  --fc-classic-border: var(--color-line);
+  --fc-classic-foreground: var(--color-ink);
+  --fc-classic-muted-foreground: var(--color-ink-mute);
+  --fc-classic-faint-foreground: var(--color-ink-soft);
+  --fc-classic-today: #f8fafc;
+  --fc-classic-primary: var(--color-ink);
+  --fc-classic-button: #ffffff;
+  --fc-classic-button-border: var(--color-line);
+  --fc-classic-button-foreground: var(--color-ink-soft);
+  --fc-classic-button-strong: var(--color-ink);
+  --fc-classic-button-strong-border: var(--color-ink);
+  --fc-classic-now: var(--color-salmon-ink);
+  font-size: 13px;
+}
+.nudge-cal .nudge-preview { border-style: dashed; opacity: 0.7; }
+.nudge-cal .nudge-done { opacity: 0.45; text-decoration: line-through; }
+

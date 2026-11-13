@@ -13,7 +13,7 @@ export default async function ProjectsPage() {
   });
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="mx-auto flex max-w-3xl flex-col gap-8">
       <header className="flex items-center justify-between">
         <h1 className="text-xl font-semibold tracking-tight">Projets</h1>
         <form action={createProject} className="flex gap-2">

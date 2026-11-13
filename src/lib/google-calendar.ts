@@ -56,3 +56,13 @@ export async function upsertEvent(cal: Calendar, e: EventInput): Promise<string>
   const res = await cal.events.insert({ calendarId: "primary", requestBody });
   return res.data.id!;
 }
+
+/** Créneaux occupés : calendrier Google (s'il est connecté) + tâches Nudge déjà planifiées. */
+export async function allBusy(userId: string, cal: Calendar | null, from: Date, to: Date, exceptTaskId?: string): Promise<Busy[]> {
+  const own = await prisma.task.findMany({
+    where: { userId, completedAt: null, scheduledAt: { gte: from, lt: to }, NOT: exceptTaskId ? { id: exceptTaskId } : undefined },
+    select: { scheduledAt: true, durationMinutes: true },
+  });
+  const google = cal ? await busyBetween(cal, from, to) : [];
+  return [...google, ...own.map((t) => ({ start: t.scheduledAt!, end: new Date(t.scheduledAt!.getTime() + t.durationMinutes * 60_000) }))];
+}

@@ -12,6 +12,7 @@ export const planSchema = z.object({
         mental_load: z.enum(["high", "medium", "low"]).default("medium"),
         method_used: z.string().optional(),
         schedule_offset_days: z.number().int().min(0).default(0),
+        scheduled_at: z.iso.datetime({ offset: true, local: true }).optional(), // créneau choisi par l'IA (ISO 8601)
       }),
     )
     .min(1),

@@ -18,7 +18,7 @@ const METHODS = [
 
 export default function AcademyPage() {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="mx-auto flex max-w-3xl flex-col gap-8">
       <h1 className="text-xl font-semibold tracking-tight">Méthodes</h1>
       <div className="flex flex-col gap-4">
         {METHODS.map((m) => (

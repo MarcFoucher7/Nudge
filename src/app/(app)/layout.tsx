@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { BookOpen, CalendarDays, FileJson, Flame, Folder, LogOut } from "lucide-react";
+import { BookOpen, CalendarDays, CalendarRange, FileJson, Flame, Folder, LogOut } from "lucide-react";
 import { requireUserId, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const nav = [
   { href: "/dashboard", label: "Aujourd'hui", Icon: CalendarDays },
+  { href: "/planner", label: "Planning", Icon: CalendarRange },
   { href: "/projects", label: "Projets", Icon: Folder },
   { href: "/import", label: "Importer", Icon: FileJson },
   { href: "/academy", label: "Méthodes", Icon: BookOpen },
@@ -50,9 +51,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </form>
         </div>
       </aside>
-      <main className="flex-1 px-6 py-8 md:px-10 md:py-10">
-        <div className="mx-auto max-w-3xl">{children}</div>
-      </main>
+      <main className="min-w-0 flex-1 px-6 py-8 md:px-10 md:py-10">{children}</main>
     </div>
   );
 }

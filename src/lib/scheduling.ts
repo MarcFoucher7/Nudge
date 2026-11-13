@@ -43,3 +43,21 @@ export function placeAll<T extends { earliest: Date; durationMinutes: number }>(
     return { ...t, start };
   });
 }
+
+/** Fenêtres libres (heures de travail moins `busy`) entre `from` et `from + days`, pour le contexte envoyé à l'IA. */
+export function freeSlots(busy: Busy[], from: Date, days: number): Busy[] {
+  const out: Busy[] = [];
+  const sorted = [...busy].sort((a, b) => a.start.getTime() - b.start.getTime());
+  for (let d = 0; d < days; d++) {
+    const day = addDays(startOfDay(from), d);
+    let cursor = d === 0 && from > at(day, WORK_START) ? from : at(day, WORK_START);
+    const dayEnd = at(day, WORK_END);
+    for (const b of sorted) {
+      if (b.end <= cursor || b.start >= dayEnd) continue;
+      if (b.start > cursor) out.push({ start: cursor, end: b.start });
+      if (b.end > cursor) cursor = b.end;
+    }
+    if (cursor < dayEnd) out.push({ start: cursor, end: dayEnd });
+  }
+  return out;
+}

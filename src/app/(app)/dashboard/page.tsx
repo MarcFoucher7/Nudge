@@ -43,7 +43,7 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="mx-auto flex max-w-3xl flex-col gap-10">
       <header className="flex items-baseline justify-between">
         <h1 className="text-xl font-semibold tracking-tight">Aujourd&apos;hui</h1>
         <TodayDate />

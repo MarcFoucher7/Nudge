@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
+    "@fullcalendar/react": "^7.1.5",
     "@prisma/client": "^6.19.3",
     "googleapis": "^189.0.0",
     "lucide-react": "^1.72.0",
@@ -21,6 +22,7 @@
     "prisma": "^6.19.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "temporal-polyfill": "^1.0.8",
     "zod": "^4.6.7"
   },
   "devDependencies": {
